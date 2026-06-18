@@ -1,0 +1,28 @@
+bucketRegion  ---->>        us-east-2
+
+pBucketEnvironment     dev
+
+pBusinessUnit  ----->    rdh
+
+pDataLayer.    raw
+
+pEnvironment.  dev
+
+pOrganisation. enterpriseanalytics
+
+pRegion.   us
+
+pRegionSpecificAmia.   Yes
+
+pRegionSpecificClaria.    Yes
+
+pRoleEnvironment.   dev
+
+pSchemaId    401
+
+pTagABACAppName     enterpriseanalytics-rdh
+
+pTagAppidValue       423398
+
+pTagOwnerValue       nagalakshumma.yeddula@vantive.com
+

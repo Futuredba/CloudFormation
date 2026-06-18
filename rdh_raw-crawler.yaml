@@ -72,16 +72,16 @@ Parameters:
     Type: Number
     Description: DB instance id or ENV Name
 
-pTagABACAppName:
-  Type: String
-  Description: The name of the application you are deploying
+  pTagABACAppName:
+    Type: String
+    Description: The name of the application you are deploying
 
-pTagOwnerValue:
-  Type: 'String'
+  pTagOwnerValue:
+    Type: 'String'
 
-pTagAppidValue:
-  Description: Provide the applciaton ID
-  Type: 'String'
+  pTagAppidValue:
+    Description: Provide the applciaton ID
+    Type: 'String'
 
 Conditions:
   # Basic conditions for Amia and Claria
@@ -111,13 +111,13 @@ Metadata:
         - pTagOwnerValue
         - pTagABACAppName
 
-AWS::CloudFormation::Tags:
-  - Key: AppId
-    Value: !Ref pTagAppidValue
-  - Key: Owner
-    Value: !Ref pTagOwnerValue
-  - Key: ABACAppName
-    Value: !Ref pTagABACAppName
+  AWS::CloudFormation::Tags:
+    - Key: AppId
+      Value: !Ref pTagAppidValue
+    - Key: Owner
+      Value: !Ref pTagOwnerValue
+    - Key: ABACAppName
+      Value: !Ref pTagABACAppName
 
 Resources:
   # Device Amia Database
@@ -337,7 +337,6 @@ rRDHRawDeviceclariaGlueCrawler:
   Properties:
     DatabaseName: !Ref rRDHAnalyticsDeviceclariaGlueDatabase
     Description: Glue crawler for the Device Claria
-    DatabaseName: !Ref rRDHAnalyticsDeviceclariaGlueDatabase
     Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
     Schedule:
       ScheduleExpression: "cron(0 0 1 * ? *)"
@@ -345,7 +344,8 @@ rRDHRawDeviceclariaGlueCrawler:
       UpdateBehavior: UPDATE_IN_DATABASE
     Targets:
       S3Targets:
-        - Path: Fn::Join:
+        - Path: 
+            Fn::Join:
             - '/'
             - - "s3"
               - ""
@@ -373,7 +373,6 @@ rRDHRawCorerenalGlueCrawler:
   Properties:
     DatabaseName: !Ref rRDHAnalyticsCorerenalGlueDatabase
     Description: Glue crawler for the Core Renal
-    DatabaseName: !Ref rRDHAnalyticsCorerenalGlueDatabase
     Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
     Schedule:
       ScheduleExpression: "cron(0 0 1 * ? *)"
@@ -381,7 +380,8 @@ rRDHRawCorerenalGlueCrawler:
       UpdateBehavior: UPDATE_IN_DATABASE
     Targets:
       S3Targets:
-        - Path: Fn::Join:
+        - Path: 
+            Fn::Join:
             - '/'
             - - "s3"
               - ""
@@ -416,7 +416,8 @@ rRDHRawPlatformlinkGlueCrawler:
     # Configuration: '{#     "Version":1.0,#     "Grouping":{"TableLevelConfiguration":1}# }'
     Targets:
       S3Targets:
-        - Path: Fn::Join:
+        - Path: 
+            Fn::Join:
             - '/'
             - - "s3"
               - ""
@@ -451,7 +452,8 @@ rRDHRawAnalyticsGlueCrawler:
       UpdateBehavior: UPDATE_IN_DATABASE
     Targets:
       S3Targets:
-        - Path: !Join
+        - Path: 
+            Fn::Join:
             - '/'
             - - "s3"
               - ""
@@ -486,7 +488,8 @@ rRDHRawDevicecoreGlueCrawler:
       UpdateBehavior: UPDATE_IN_DATABASE
     Targets:
       S3Targets:
-        - Path: !Join
+        - Path: 
+            Fn::Join:
             - '/'
             - - "s3"
               - ""
@@ -520,7 +523,8 @@ rRDHRawSubscriptionGlueCrawler:
       UpdateBehavior: UPDATE_IN_DATABASE
     Targets:
       S3Targets:
-        - Path: !Join
+        - Path: 
+            Fn::Join:
             - '/'
             - - "s3"
               - ""
@@ -555,7 +559,8 @@ rRDHRawLportalGlueCrawler:
       UpdateBehavior: UPDATE_IN_DATABASE
     Targets:
       S3Targets:
-        - Path: !Join
+        - Path: 
+            Fn::Join:
             - '/'
             - - "s3"
               - ""
@@ -618,7 +623,7 @@ Outputs:
      Description: "Name of the Lportal Database"
      Value: !Ref rRDHAnalyticsLportalGlueDatabase
 
-Crawler Outputs
+#Crawler Outputs
 
 DeviceAmiaCrawlerName:
      Condition: CreateAmiaResources
