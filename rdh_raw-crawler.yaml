@@ -1,0 +1,683 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template to create Raw Layer Glue tables and GLue Crawlers.
+Parameters:
+  pOrganisation:
+    Description: The name of the environment where resource to be deployed
+    Type: String
+
+  pBucketEnvironment:
+    Description: The name of the environment for bucket name
+    Type: String
+    AllowedValues:
+      - dev
+      - tst
+      - prd
+      - prod
+
+  pRoleEnvironment:
+    Description: The name of the environment for Glue role
+    Type: String
+    AllowedValues:
+      - dev
+      - test
+      - prd
+      - prod
+
+  pEnvironment:
+    Description: The name of the environment where resource to be deployed
+    Type: String
+    AllowedValues:
+      - dev
+      - plk
+      - prd
+      - prod
+
+  pRegion:
+    Description: The region name
+    Type: String
+    AllowedValues:
+      - us
+      - emea
+
+  bucketRegion:
+    Description: The region name
+    Type: String
+    AllowedValues:
+      - us-east-2
+      - eu-central-1
+
+  pRegionSpecificAmia:
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+
+  pRegionSpecificClaria:
+    Type: String
+    AllowedValues:
+      - "Yes"
+      - "No"
+
+  pBusinessUnit:
+    Description: The business unit name
+    ConstraintDescription: The name of the business should start with alphabet and in lowercase
+    AllowedPattern: "[a-z][a-z0-9]*"
+    Type: String
+
+  pDataLayer:
+    Type: String
+    Description: Data layer names
+
+  pSchemaId:
+    Type: Number
+    Description: DB instance id or ENV Name
+
+pTagABACAppName:
+  Type: String
+  Description: The name of the application you are deploying
+
+pTagOwnerValue:
+  Type: 'String'
+
+pTagAppidValue:
+  Description: Provide the applciaton ID
+  Type: 'String'
+
+Conditions:
+  # Basic conditions for Amia and Claria
+  IsAmiaEnabled: !Equals
+  - !Ref pRegionSpecificAmia
+  - "Yes"
+  IsClariaEnabled: !Equals
+  - !Ref pRegionSpecificClaria
+  - "Yes"
+
+# Derived conditions for resource creation
+
+CreateAmiaResources: !Equals
+  - !Ref pRegionSpecificAmia
+  - "Yes"
+CreateClariaResources: !Equals
+  - !Ref pRegionSpecificClaria
+  - "Yes"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+  ParameterGroups:
+    - Label:
+        default: "Tag Configuration"
+      Parameters:
+        - pTagAppidValue
+        - pTagOwnerValue
+        - pTagABACAppName
+
+AWS::CloudFormation::Tags:
+  - Key: AppId
+    Value: !Ref pTagAppidValue
+  - Key: Owner
+    Value: !Ref pTagOwnerValue
+  - Key: ABACAppName
+    Value: !Ref pTagABACAppName
+
+Resources:
+  # Device Amia Database
+  rRDHAnalyticsDeviceamiaGlueDatabase:
+    Type: AWS::Glue::Database
+    Condition: CreateAmiaResources
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: 
+          Fn::Sub:
+          - '${ORG}${BU}${LAYER}${ENV}${REG}m_deviceamia'
+          - ORG: !Ref pOrganisation
+            BU: !Ref pBusinessUnit
+            LAYER: !Ref pDataLayer
+            ENV: !Ref pEnvironment
+            REG: !Ref pSchemaId
+      CreateTableDefaultPermissions:
+        - Permissions:
+            - ALL
+          Principal: DataLakePrincipalIdentifier
+            EVERYONE
+
+# Device Claria Database
+rRDHAnalyticsDeviceclariaGlueDatabase:
+  Type: AWS::Glue::Database
+  Condition: CreateClariaResources
+  Properties:
+    CatalogId: !Ref AWS::AccountId
+    DatabaseInput:
+      Name: 
+        Fn::Sub:
+        - '${ORG}${BU}${LAYER}${ENV}${REG}m_deviceclaria'
+        - ORG: !Ref pOrganisation
+          BU: !Ref pBusinessUnit
+          LAYER: !Ref pDataLayer
+          ENV: !Ref pEnvironment
+          REG: !Ref pSchemaId
+    CreateTableDefaultPermissions:
+      - Permissions:
+          - ALL
+        Principal: DataLakePrincipalIdentifier
+          EVERYONE
+
+# Core Renal Database
+rRDHAnalyticsCorerenalGlueDatabase:
+  Type: AWS::Glue::Database
+  Condition: CreateRenalResources
+  Properties:
+    CatalogId: !Ref AWS::AccountId
+    DatabaseInput:
+      Name: 
+        Fn::Sub:
+        - '${ORG}${BU}${LAYER}${ENV}${REG}c_corerenal'
+        - ORG: !Ref pOrganisation
+          BU: !Ref pBusinessUnit
+          LAYER: !Ref pDataLayer
+          ENV: !Ref pEnvironment
+          REG: !Ref pSchemaId
+    CreateTableDefaultPermissions:
+      - Permissions:
+          - ALL
+        Principal: DataLakePrincipalIdentifier
+          EVERYONE
+
+# Platform Link Database
+
+rRDHAnalyticsPlatformlinkGlueDatabase:
+  Type: AWS::Glue::Database
+  Condition: CreatePlatformLinkResources
+  Properties:
+    CatalogId: !Ref AWS::AccountId
+    DatabaseInput:
+      Name: 
+        Fn::Sub:
+        - '${ORG}${BU}${LAYER}${ENV}${REG}c_platformlink'
+        - ORG: !Ref pOrganisation
+          BU: !Ref pBusinessUnit
+          LAYER: !Ref pDataLayer
+          ENV: !Ref pEnvironment
+          REG: !Ref pSchemaId
+    CreateTableDefaultPermissions:
+      - Permissions:
+          - ALL
+        Principal: DataLakePrincipalIdentifier
+          EVERYONE
+
+# Analytics Database
+
+rRDHAnalyticsAnalyticsGlueDatabase:
+  Type: AWS::Glue::Database
+  Condition: CreateAnalyticsResources
+  Properties:
+    CatalogId: !Ref AWS::AccountId
+    DatabaseInput:
+      Name: 
+        Fn::Sub:
+        - '${ORG}${BU}${LAYER}${ENV}${REG}m_analytics'
+        - ORG: !Ref pOrganisation
+          BU: !Ref pBusinessUnit
+          LAYER: !Ref pDataLayer
+          ENV: !Ref pEnvironment
+          REG: !Ref pSchemaId
+    CreateTableDefaultPermissions:
+      - Permissions:
+          - ALL
+        Principal: DataLakePrincipalIdentifier
+          EVERYONE
+
+# Device Core Database
+
+rRDHAnalyticsDevicecoreGlueDatabase:
+  Type: AWS::Glue::Database
+  Condition: CreateDeviceCoreResources
+  Properties:
+    CatalogId: !Ref AWS::AccountId
+    DatabaseInput:
+      Name: 
+        Fn::Sub:
+        - '${ORG}${BU}${LAYER}${ENV}${REG}m_devicecore'
+        - ORG: !Ref pOrganisation
+          BU: !Ref pBusinessUnit
+          LAYER: !Ref pDataLayer
+          ENV: !Ref pEnvironment
+          REG: !Ref pSchemaId
+    CreateTableDefaultPermissions:
+      - Permissions:
+          - ALL
+        Principal: DataLakePrincipalIdentifier
+          EVERYONE
+
+# Subscription Database
+
+rRDHAnalyticsSubscriptionGlueDatabase:
+  Type: AWS::Glue::Database
+  Condition: CreateSubscriptionResources
+  Properties:
+    CatalogId: !Ref AWS::AccountId
+    DatabaseInput:
+      Name: 
+        Fn::Sub:
+        - '${ORG}${BU}${LAYER}${ENV}${REG}m_subscription'
+        - ORG: !Ref pOrganisation
+          BU: !Ref pBusinessUnit
+          LAYER: !Ref pDataLayer
+          ENV: !Ref pEnvironment
+          REG: !Ref pSchemaId
+    CreateTableDefaultPermissions:
+      - Permissions:
+          - ALL
+        Principal: DataLakePrincipalIdentifier
+          EVERYONE
+
+# Lportal Database
+
+rRDHAnalyticsLportalGlueDatabase:
+  Type: AWS::Glue::Database
+  Condition: CreateLportalResources
+  Properties:
+    CatalogId: !Ref AWS::AccountId
+    DatabaseInput:
+      Name: 
+        Fn::Sub:
+        - '${ORG}${BU}${LAYER}${ENV}${REG}v_lportal'
+        - ORG: !Ref pOrganisation
+          BU: !Ref pBusinessUnit
+          LAYER: !Ref pDataLayer
+          ENV: !Ref pEnvironment
+          REG: !Ref pSchemaId
+    CreateTableDefaultPermissions:
+      - Permissions:
+          - ALL
+        Principal: DataLakePrincipalIdentifier
+          EVERYONE
+
+# Device Amia Crawler
+rRDHRawDeviceamiaGlueCrawler:
+  Type: AWS::Glue::Crawler
+  Condition: CreateAmiaResources
+  Properties:
+    DatabaseName: !Ref rRDHAnalyticsDeviceamiaGlueDatabase
+    Description: Glue crawler for the Device Amia Database
+    Name: !Ref rRDHAnalyticsDeviceamiaGlueDatabase
+    Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
+    Schedule:
+      ScheduleExpression: "cron(0 0 1 * ? *)"
+    SchemaChangePolicy:
+      UpdateBehavior: UPDATE_IN_DATABASE
+    Targets:
+      S3Targets:
+          - Path:
+              Fn::Join:
+              - '/'
+              - - "s3:"
+                - ""
+                - !Sub
+                  - "van-${env}-rdh-enterpriseanalytics-${region}-inbound-bkt"
+                  - env: !Ref pBucketEnvironment
+                    region: !Ref pRegion
+                - !Sub
+                  - '${ENV}${REG}'
+                  - ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+                - "raw"
+                - "database"
+                - !Sub
+                  - '${BU}raw${ENV}${REG}${DB}'
+                  - BU: !Ref pBusinessUnit
+                    ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+                    DB: !Ref pDatabaseName
+
+#Device Claria Crawler
+rRDHRawDeviceclariaGlueCrawler:
+  Type: AWS::Glue::Crawler
+  Condition: CreateClariaResources
+  Properties:
+    DatabaseName: !Ref rRDHAnalyticsDeviceclariaGlueDatabase
+    Description: Glue crawler for the Device Claria
+    DatabaseName: !Ref rRDHAnalyticsDeviceclariaGlueDatabase
+    Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
+    Schedule:
+      ScheduleExpression: "cron(0 0 1 * ? *)"
+    SchemaChangePolicy:
+      UpdateBehavior: UPDATE_IN_DATABASE
+    Targets:
+      S3Targets:
+        - Path: Fn::Join:
+            - '/'
+            - - "s3"
+              - ""
+              - !Sub
+                - "van-${env}-rdh-enterpriseanalytics-${region}-inbound-bkt"
+                - env: !Ref pBucketEnvironment
+                  region: !Ref pRegion
+              - !Sub
+                - '${ENV}${REG}'
+                - ENV: !Ref pEnvironment
+                  REG: !Ref pSchemaId
+              - "raw"
+              - "database"
+              - !Sub
+                - '${BU}raw${ENV}${REG}${DB}'
+                - BU: !Ref pBusinessUnit
+                  ENV: !Ref pEnvironment
+                  REG: !Ref pSchemaId
+                  DB: !Ref pDatabaseName
+
+#Core Renal Crawler
+
+rRDHRawCorerenalGlueCrawler:
+  Type: AWS::Glue::Crawler
+  Properties:
+    DatabaseName: !Ref rRDHAnalyticsCorerenalGlueDatabase
+    Description: Glue crawler for the Core Renal
+    DatabaseName: !Ref rRDHAnalyticsCorerenalGlueDatabase
+    Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
+    Schedule:
+      ScheduleExpression: "cron(0 0 1 * ? *)"
+    SchemaChangePolicy:
+      UpdateBehavior: UPDATE_IN_DATABASE
+    Targets:
+      S3Targets:
+        - Path: Fn::Join:
+            - '/'
+            - - "s3"
+              - ""
+              - !Sub
+                - "van-${env}-rdh-enterpriseanalytics-${region}-inbound-bkt"
+                - env: !Ref pBucketEnvironment
+                  region: !Ref pRegion
+              - !Sub
+                - '${ENV}${REG}'
+                - ENV: !Ref pEnvironment
+                  REG: !Ref pSchemaId
+              - "raw"
+              - "database"
+              - !Sub
+                - '${BU}raw${ENV}${REG}${DB}'
+                - BU: !Ref pBusinessUnit
+                  ENV: !Ref pEnvironment
+                  REG: !Ref pSchemaId
+                  DB: !Ref pDatabaseName
+#Platform Link Crawler
+
+rRDHRawPlatformlinkGlueCrawler:
+  Type: AWS::Glue::Crawler
+  Properties:
+    DatabaseName: !Ref rRDHAnalyticsPlatformlinkGlueDatabase
+    Description: Glue crawler for the Platform Link
+    Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
+    Schedule:
+      Expression: "cron(0 0 1 * ? *)"
+    SchemaChangePolicy:
+      UpdateBehavior: UPDATE_IN_DATABASE
+    # Configuration: '{#     "Version":1.0,#     "Grouping":{"TableLevelConfiguration":1}# }'
+    Targets:
+      S3Targets:
+        - Path: Fn::Join:
+            - '/'
+            - - "s3"
+              - ""
+              - !Sub
+                - "van-${env}-rdh-enterpriseanalytics-${region}-inbound-bkt"
+                - env: !Ref pBucketEnvironment
+                  region: !Ref pRegion
+              - !Sub
+                - '${ENV}${REG}'
+                - ENV: !Ref pEnvironment
+                  REG: !Ref pSchemaId
+              - "raw"
+              - "database"
+              - !Sub
+                - '${BU}raw${ENV}${REG}${DB}'
+                - BU: !Ref pBusinessUnit
+                  ENV: !Ref pEnvironment
+                  REG: !Ref pSchemaId
+                  DB: !Ref pDatabaseName
+
+#Analytics Crawler
+
+rRDHRawAnalyticsGlueCrawler:
+  Type: AWS::Glue::Crawler
+  Properties:
+    DatabaseName: !Ref rRDHAnalyticsAnalyticsGlueDatabase
+    Description: Glue crawler for the Analytics Database
+    Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
+    Schedule:
+      ScheduleExpression: "cron(0 0 1 * ? *)"
+    SchemaChangePolicy:
+      UpdateBehavior: UPDATE_IN_DATABASE
+    Targets:
+      S3Targets:
+        - Path: !Join
+            - '/'
+            - - "s3"
+              - ""
+              - !Sub
+                  - "van-${env}-rdh-enterpriseanalytics-${region}-inbound-bkt"
+                  - env: !Ref pBucketEnvironment
+                    region: !Ref pRegion
+              - !Sub
+                  - '${ENV}${REG}'
+                  - ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+              - "raw"
+              - "database"
+              - !Sub
+                  - '${BU}raw${ENV}${REG}${DB}'
+                  - BU: !Ref pBusinessUnit
+                    ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+                    DB: !Ref pDatabaseName
+
+#Device Core Crawler
+
+rRDHRawDevicecoreGlueCrawler:
+  Type: AWS::Glue::Crawler
+  Properties:
+    DatabaseName: !Ref rRDHAnalyticsDevicecoreGlueDatabase
+    Description: Glue crawler for the Device Core Database
+    Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
+    Schedule:
+      ScheduleExpression: "cron(0 0 1 * ? *)"
+    SchemaChangePolicy:
+      UpdateBehavior: UPDATE_IN_DATABASE
+    Targets:
+      S3Targets:
+        - Path: !Join
+            - '/'
+            - - "s3"
+              - ""
+              - !Sub
+                  - "van-${env}-rdh-enterpriseanalytics-${region}-inbound-bkt"
+                  - env: !Ref pBucketEnvironment
+                    region: !Ref pRegion
+              - !Sub
+                  - '${ENV}${REG}'
+                  - ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+              - "raw"
+              - "database"
+              - !Sub
+                  - '${BU}raw${ENV}${REG}${DB}'
+                  - BU: !Ref pBusinessUnit
+                    ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+                    DB: !Ref pDatabaseName
+#Subscription Crawler
+
+rRDHRawSubscriptionGlueCrawler:
+  Type: AWS::Glue::Crawler
+  Properties:
+    DatabaseName: !Ref rRDHAnalyticsSubscriptionGlueDatabase
+    Description: Glue crawler for the Subscription Database
+    Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
+    Schedule:
+      ScheduleExpression: "cron(0 0 1 * ? *)"
+    SchemaChangePolicy:
+      UpdateBehavior: UPDATE_IN_DATABASE
+    Targets:
+      S3Targets:
+        - Path: !Join
+            - '/'
+            - - "s3"
+              - ""
+              - !Sub
+                  - "van-${env}-rdh-enterpriseanalytics-${region}-inbound-bkt"
+                  - env: !Ref pBucketEnvironment
+                    region: !Ref pRegion
+              - !Sub
+                  - '${ENV}${REG}'
+                  - ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+              - "raw"
+              - "database"
+              - !Sub
+                  - '${BU}raw${ENV}${REG}${DB}'
+                  - BU: !Ref pBusinessUnit
+                    ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+                    DB: !Ref pDatabaseName
+
+#Lportal Crawler
+
+rRDHRawLportalGlueCrawler:
+  Type: AWS::Glue::Crawler
+  Properties:
+    DatabaseName: !Ref rRDHAnalyticsLportalGlueDatabase
+    Description: Glue crawler for the Lportal Database
+    Role: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
+    Schedule:
+      ScheduleExpression: "cron(0 0 1 * ? *)"
+    SchemaChangePolicy:
+      UpdateBehavior: UPDATE_IN_DATABASE
+    Targets:
+      S3Targets:
+        - Path: !Join
+            - '/'
+            - - "s3"
+              - ""
+              - !Sub
+                  - "van-${env}-rdh-enterpriseanalytics-${region}-inbound-bkt"
+                  - env: !Ref pBucketEnvironment
+                    region: !Ref pRegion
+              - !Sub
+                  - '${ENV}${REG}'
+                  - ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+              - "raw"
+              - "database"
+              - !Sub
+                  - '${BU}raw${ENV}${REG}${DB}'
+                  - BU: !Ref pBusinessUnit
+                    ENV: !Ref pEnvironment
+                    REG: !Ref pSchemaId
+                    DB: !Ref pDatabaseName
+
+Outputs:
+
+  DeviceAmiaDatabaseName:
+     Condition: CreateAmiaResources
+     Description: "Name of the Device Amia Database"
+     Value: !Ref rRDHAnalyticsDeviceamiaGlueDatabase
+
+  DeviceclariaDatabaseName:
+     Condition: CreateClariaResources
+     Description: "Name of the Device Claria Database"
+     Value: !Ref rRDHAnalyticsDeviceclariaGlueDatabase
+
+  CorerenalDatabaseName:
+     Condition: CreateRenalResources
+     Description: "Name of the Core Renal Database"
+     Value: !Ref rRDHAnalyticsCorerenalGlueDatabase
+
+  PlatformlinkDatabaseName:
+     Condition: CreatePlatformlinkResources
+     Description: "Name of the Platform Link Database"
+     Value: !Ref rRDHAnalyticsPlatformlinkGlueDatabase
+
+  AnalyticsDatabaseName:
+     Condition: CreateAnalyticsResources
+     Description: "Name of the Analytics Database"
+     Value: !Ref rRDHAnalyticsAnalyticsGlueDatabase
+
+  DevicecoreDatabaseName:
+     Condition: CreateDevicecoreResources
+     Description: "Name of the Device Core Database"
+     Value: !Ref rRDHAnalyticsDevicecoreGlueDatabase
+
+  SubscriptionDatabaseName:
+     Condition: CreateSubscriptionResources
+     Description: "Name of the Subscription Database"
+     Value: !Ref rRDHAnalyticsSubscriptionGlueDatabase
+
+  LportalDatabaseName:
+     Condition: CreateLportalResources
+     Description: "Name of the Lportal Database"
+     Value: !Ref rRDHAnalyticsLportalGlueDatabase
+
+Crawler Outputs
+
+DeviceAmiaCrawlerName:
+     Condition: CreateAmiaResources
+     Description: "Name of the Device Amia Crawler"
+     Value: !Ref rRDHRawDeviceamiaGlueCrawler
+
+DeviceclariaCrawlerName:
+     Condition: CreateClariaResources
+     Description: "Name of the Device Claria Crawler"
+     Value: !Ref rRDHRawDeviceclariaGlueCrawler
+
+CorerenalCrawlerName:
+     Condition: CreateRenalResources
+     Description: "Name of the Core Renal Crawler"
+     Value: !Ref rRDHRawCorerenalGlueCrawler
+
+PlatformlinkCrawlerName:
+     Condition: CreatePlatformlinkResources
+     Description: "Name of the Platform Link Crawler"
+     Value: !Ref rRDHRawPlatformlinkGlueCrawler
+
+AnalyticsCrawlerName:
+     Condition: CreateAnalyticsResources
+     Description: "Name of the Analytics Crawler"
+     Value: !Ref rRDHRawAnalyticsGlueCrawler
+
+DevicecoreCrawlerName:
+     Condition: CreateDevicecoreResources
+     Description: "Name of the Device Core Crawler"
+     Value: !Ref rRDHRawDevicecoreGlueCrawler
+
+SubscriptionCrawlerName:
+     Condition: CreateSubscriptionResources
+     Description: "Name of the Subscription Crawler"
+     Value: !Ref rRDHRawSubscriptionGlueCrawler
+
+LportalCrawlerName:
+     Condition: CreateLportalResources
+     Description: "Name of the Lportal Crawler"
+     Value: !Ref rRDHRawLportalGlueCrawler
+
+# S3 Path Outputs
+
+S3BasePath:
+  Description: "Base S3 path for all databases"
+  Value: !Sub
+    - "s3://van-${env}-rdh-enterpriseanalytics-${region}-inbound-bkt/${LAYER}/${BU}${ENV}${REG}/"
+    - env: !Ref pBucketEnvironment
+      region: !Ref pRegion
+      LAYER: !Ref pDataLayer
+      BU: !Ref pBusinessUnit
+      ENV: !Ref pEnvironment
+      REG: !Ref pSchemaId
+      bucketRegion: !Ref bucketRegion
+
+GlueRole:
+  Description: "IAM Role used by Glue Crawlers"
+  Value: !Sub van-${pRoleEnvironment}-entplat-${pBusinessUnit}-glue-role
+
+ScheduleExpression:
+  Description: "Cron expression for crawler schedules"
+  Value: "cron(0 0 1 * ? *)"
