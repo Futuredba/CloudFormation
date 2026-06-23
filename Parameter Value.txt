@@ -22,7 +22,7 @@ pSchemaId    401
 
 pTagABACAppName     enterpriseanalytics-rdh
 
-pTagAppidValue       423398
+pTagAppidValue       060494
 
-pTagOwnerValue       nagalakshumma.yeddula@vantive.com
+pTagOwnerValue       Ashish Tajane
 
